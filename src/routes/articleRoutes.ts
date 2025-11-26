@@ -31,12 +31,13 @@ export function registerArticleRoutes(app: Application) {
     })
   );
 
-  // Get article by id (with L1/L2/DB logic)
+  // Get article by id 
   app.get(
     "/articles/:id",
     asyncHandler(async (req: Request, res: Response) => {
       const id = req.params.id;
-      const article = await getArticle(id);
+      const { article, source } = await getArticle(id);
+      res.setHeader("x-article-source", source);
 
       if (!article) {
         return res.status(404).json({ error: "Article not found" });

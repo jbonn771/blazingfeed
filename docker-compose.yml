@@ -16,6 +16,20 @@ services:
       - mongo
       - redis
 
+  test:
+    build: .          # use the same image context
+    container_name: blazingfeed-test
+    environment:
+      NODE_ENV: test
+      MONGO_URI: mongodb://mongo:27017/blazingfeed
+      MONGO_DB_NAME: blazingfeed
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      - mongo
+      - redis
+    command: ["npm", "run", "test:integration"]
+
   mongo:
     image: mongo:6
     container_name: blazingfeed-mongo

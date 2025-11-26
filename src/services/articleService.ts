@@ -28,11 +28,14 @@ let dbHits = 0;
 /**
  * Read path: L1 (memory) -> L2 (Redis) -> DB
  */
-export async function getArticle(id: string): Promise<ArticleWithMeta | null> {
+export async function getArticle(id: string): Promise<{
+  article: ArticleWithMeta | null,
+  source: "memory" | "redis" | "db";
+}> {
   // 1) L1
   const fromL1 = getArticleFromL1(id);
   if (fromL1) {
-    return { ...fromL1, meta: { source: "memory" } };
+    return { article: { ...fromL1, meta: { source: "memory" } }, source: "memory" };
   }
 
   // 2) L2 (Redis)
@@ -40,12 +43,12 @@ export async function getArticle(id: string): Promise<ArticleWithMeta | null> {
   if (fromRedis) {
     // warm L1
     setArticleInL1(fromRedis);
-    return { ...fromRedis, meta: { source: "redis" } };
+    return { article: { ...fromRedis, meta: { source: "redis" } }, source: "redis" };
   }
 
   // 3) DB
   const fromDb = await findArticleById(id);
-  if (!fromDb) return null;
+  if (!fromDb) return { article: null, source: "db" };
 
   dbHits++;
 
@@ -53,7 +56,7 @@ export async function getArticle(id: string): Promise<ArticleWithMeta | null> {
   await setArticleInRedis(fromDb);
   setArticleInL1(fromDb);
 
-  return { ...fromDb, meta: { source: "db" } };
+  return { article: { ...fromDb, meta: { source: "db" } }, source: "db" };
 }
 
 /**

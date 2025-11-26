@@ -1,7 +1,9 @@
-import type { RedisClientType } from "redis";
+import { createClient } from "redis";
 import type { Article } from "../db/articleRepo";
 
-let redisClient: RedisClientType | null = null;
+export type AppRedisClient = ReturnType<typeof createClient>;
+
+let redisClient: AppRedisClient | null = null;
 
 // Metrics
 let l2Hits = 0;
@@ -9,8 +11,15 @@ let l2Misses = 0;
 
 const keyFor = (id: string) => `article:${id}`;
 
-export function setRedisClient(client: RedisClientType) {
+export function setRedisClient(client: AppRedisClient): void {
   redisClient = client;
+}
+
+export function getRedisClient(): AppRedisClient {
+  if (!redisClient) {
+    throw new Error("Redis client not set. Call setRedisClient() first.");
+  }
+  return redisClient;
 }
 
 export async function getArticleFromRedis(id: string): Promise<Article | null> {

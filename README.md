@@ -1,101 +1,79 @@
 BlazingFeed – Multi-Layer Caching Service (L1 + L2) with MongoDB & Redis
 
-A backend service designed to teach and demonstrate real production engineering concepts, including:
+BlazingFeed is a backend service built to demonstrate real production engineering concepts, including:
 
-Layered caching architecture (L1 in-memory + L2 Redis)
+Layered caching (L1 in-memory + L2 Redis)
 
 Cache-aside pattern
 
-Cache warming & invalidation
+Cache warming and invalidation
 
 Separation of concerns (routes, services, repos, cache modules)
 
-Service healthchecks & dependency monitoring
+Service health checks and dependency monitoring
 
-Metrics for cache hit ratios
+Cache hit ratio metrics
 
-Running a multi-service environment with Docker Compose
+Multi-service development using Docker Compose
 
-Express + TypeScript backend structuring
+Express + TypeScript backend architecture
 
-This project simulates a real-world, read-heavy service (e.g., articles, feed items, feature flags) and shows how to scale it by reducing database load and improving latency.
+This project simulates a real-world, read-heavy service (such as an article feed, feature flag store, or content lookup service) and shows how to scale it by reducing database load and improving latency.
 
-🎓 Concepts You Will Learn from This Project
+Concepts Covered
+1. L1/L2 Caching Architecture
 
-🚦 1. L1/L2 Caching Architecture
+High-scale systems reduce latency and load by layering caches:
 
-You’ll learn how high-scale systems reduce latency by layering caches:
+L1 (in-memory): fastest access, private to each instance
 
-L1 (In-Memory LRU Cache):
-Fastest possible access — kept per instance.
+L2 (Redis): shared distributed cache that supports horizontal scaling
 
-L2 (Redis Distributed Cache):
-Shared across multiple instances for horizontal scaling.
+This mirrors real architectures used at companies such as Netflix, Meta, Twitter, DoorDash, and others.
 
-This mirrors architectures used at companies like Netflix, Twitter, Meta, DoorDash, etc.
+2. Cache-Aside Pattern
 
-🧠 2. Cache-Aside Pattern (Industry Standard)
+This project demonstrates the industry-standard cache-aside workflow:
 
-This project teaches the exact caching strategy used in production:
+Check L1
 
-L1 → L2 → DB
+If miss, check L2
 
+If miss, read from DB
 
-If a key misses:
+Write fresh value into Redis (L2)
 
-Read from DB
+Write into in-memory L1
 
-Write to Redis (L2)
+This avoids stale cache problems, reduces DB load, and provides graceful fallback if Redis fails.
 
-Write to in-memory (L1)
+3. Cache Hit Ratio Metrics
 
-This pattern:
+The system tracks and reports:
 
-avoids stale cache problems
+L1 hits and misses
 
-keeps DB load minimal
+L2 hits and misses
 
-enables graceful fallback if Redis fails
+DB hits
 
-⚡️ 3. Cache Hit Ratio Metrics
-
-You will implement and analyze:
-
-l1Hits, l1Misses
-
-l2Hits, l2Misses
-
-dbHits
-
-And expose them through:
+Metrics are available through:
 
 GET /metrics
 
 
-This teaches how real systems measure efficiency and optimize performance.
+These measurements are essential for optimizing large-scale systems.
 
-🏗 4. Clean Backend Architecture
+4. Clean Backend Architecture
 
-This project forces you to learn proper backend layering:
+The project is structured into clear layers:
 
-routes → services → repositories → cache → db
+routes -> services -> repositories -> cache -> db
 
 
-You will understand how to split:
+This encourages maintainability and mirrors real-world application architecture.
 
-HTTP layer
-
-Business logic
-
-Persistence logic
-
-Cache adapters
-
-Environment setup
-
-This is exactly what senior engineers look for.
-
-🐳 5. Running Multi-Service Dev Environments with Docker
+5. Multi-Service Environment with Docker Compose
 
 You will run:
 
@@ -105,82 +83,71 @@ MongoDB
 
 Redis
 
-using a single docker-compose up.
+in a single coordinated environment using Docker Compose. This demonstrates container networking, dependency orchestration, and realistic local development practices.
 
-This teaches you:
+6. Health Checks and Dependency Awareness
 
-container networking
+The application includes a /health endpoint that reports:
 
-environment variables
+MongoDB connection status
 
-dependency orchestration
+Redis connection status
 
-realistic local development setups
+Overall system health
 
+This type of endpoint is standard in AWS, Kubernetes, and other deployment environments.
 
-🟢 6. Health Checks & Infrastructure Awareness
+Features
 
-The project includes a /health route that reports:
+L1 in-memory caching (LRU-style logic)
 
-Redis connected or not
+L2 Redis caching
 
-Mongo connected or not
+Cache-aside pattern implementation
 
-Overall service degraded or healthy
-
-This is how real services work inside AWS, Kubernetes, GCP, etc.
-
-
-🚀 Features
-
-L1 in-memory cache (LRU)
-
-L2 Redis distributed cache
-
-Cache-aside pattern
-
-Cache warm + invalidate
+Cache warm and invalidate paths
 
 MongoDB repository layer
 
-Metrics & hit ratios
+Cache metrics and hit ratio reporting
 
-Clean module structure
+Clean Express + TypeScript structure
 
-Express + TypeScript
+Full Docker Compose development environment
 
-Docker Compose setup
+Integration test suite (Mongo + Redis in containers)
 
-🧱 Architecture
-             ┌──────────────┐
-             │    Client     │
-             └──────┬───────┘
-                    │
+
+             +-------------+
+             |   Client    |
+             +------+------+
+                    |
               HTTP Requests
-                    │
-            ┌───────▼────────┐
-            │   Express API   │
-            └───────┬────────┘
-          L1 Check  │
-        (in-memory) │
-                    ▼
-        ┌──────────────────┐
-        │    Redis (L2)    │
-        └──────────────────┘
-                    │ miss
-                    ▼
-           ┌────────────────┐
-           │   MongoDB      │
-           └────────────────┘
+                    |
+            +-------v-------+
+            |  Express API  |
+            +-------+-------+
+            L1 Check |
+           (in-memory)
+                    v
+        +---------------------+
+        |    Redis (L2)       |
+        +---------------------+
+                    | miss
+                    v
+           +------------------+
+           |    MongoDB       |
+           +------------------+
 
-📦 Project Structure
+Project Structure
 blazingfeed/
   docker-compose.yml
   Dockerfile
   package.json
   README.md
   src/
-    index.ts
+    app.ts
+    server.ts
     routes/
       articleRoutes.ts
     services/
@@ -191,22 +158,39 @@ blazingfeed/
     cache/
       l1Cache.ts
       redisCache.ts
+  tests/
+    integration/
+      setup.ts
+      health.test.ts
+      article-cache-flow.test.ts
+      cache-metrics.test.ts
 
-🐳 Running with Docker (recommended)
-docker-compose up --build
+Running With Docker (Recommended)
 
+This project includes fully containerized integration tests that run against real MongoDB and Redis.
 
-Health check:
+1. Start infrastructure (Mongo and Redis)
+docker compose up -d mongo redis
 
-curl http://localhost:3000/health
+2. Run integration tests inside the test container
 
-🧪 API Endpoints
+(If tests fail, the exit code will be non-zero.)
+
+docker compose run --rm test
+
+3. Build the application image only if tests pass
+docker compose build app
+
+API Endpoints
 Seed an article
 POST /seed
 
-Get an article (with meta: memory/redis/db)
+Get an article (returns meta: memory/redis/db)
 GET /articles/:id
 
 Cache metrics
 GET /metrics
 
+Health Check
+GET /health
+curl http://localhost:3000/health
